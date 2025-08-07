@@ -55,11 +55,28 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
                 AIMessage(
                     id=response.id,
                     content="Sorry, I could not find an answer to your question in the specified number of steps.",
+                    additional_kwargs={
+                        "reasoning": "Reached last step with pending tool calls; emitting graceful fallback.",
+                        "tool_calls": response.tool_calls,
+                    },
                 )
             ]
         }
 
     # Return the model's response as a list to be added to existing messages
+    # Ensure helpful update fields for streaming clients
+    if response.tool_calls:
+        response.additional_kwargs = {
+            **(response.additional_kwargs or {}),
+            "tool_calls": response.tool_calls,
+            "reasoning": "Model decided to call tools to gather information.",
+        }
+    else:
+        response.additional_kwargs = {
+            **(response.additional_kwargs or {}),
+            "reasoning": "Model returned a direct answer.",
+        }
+
     return {"messages": [response]}
 
 

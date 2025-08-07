@@ -10,6 +10,29 @@ This template showcases a [ReAct agent](https://arxiv.org/abs/2210.03629) implem
 
 The core logic, defined in `src/react_agent/graph.py`, demonstrates a flexible ReAct agent that iteratively reasons about user queries and executes actions, showcasing the power of this approach for complex problem-solving tasks.
 
+### Streaming, messages, and visibility
+
+- The agent writes both intermediate and final outputs to the `messages` state using LangGraph's `MessagesAnnotation`. Each node returns incremental `{"messages": [...]}` updates, so clients can token-stream reliably.
+- Model nodes attach helpful fields to messages in `additional_kwargs`, including:
+  - `reasoning`: brief text describing why the node chose a path
+  - `tool_calls`: the tool calls proposed by the model when applicable
+- To stream thought and tool progress from a server, enable streaming with `stream_mode=["messages", "updates"]` (or add `"debug"`). Example server config snippet:
+
+```python
+from langgraph_sdk.server import create_app
+from react_agent import graph
+
+app = create_app(
+    graphs={"agent": graph},
+    cors_origins=["http://localhost:3000", "https://your-frontend.example"],
+    # streaming modes surface token deltas and incremental state updates
+    stream_mode=["messages", "updates"],
+)
+```
+
+- Ensure CORS on your LangGraph server allows your frontend origin; otherwise the browser may buffer/block the event stream.
+- The included UI can remain unchanged: it token-streams and will surface reasoning when the server emits updates.
+
 ## What it does
 
 The ReAct agent:
