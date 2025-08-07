@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 from typing import Sequence
 
 from langchain_core.messages import AnyMessage
-from langgraph.graph import MessagesAnnotation
+try:
+    # Newer LangGraph versions expose MessagesAnnotation
+    from langgraph.graph import MessagesAnnotation as _MessagesAnnotation
+except Exception:  # pragma: no cover - compatibility for older runtimes
+    # Older versions use add_messages reducer
+    from langgraph.graph import add_messages as _MessagesAnnotation
 from langgraph.managed import IsLastStep
 from typing_extensions import Annotated
 
@@ -18,7 +23,7 @@ class InputState:
     This class is used to define the initial state and structure of incoming data.
     """
 
-    messages: Annotated[Sequence[AnyMessage], MessagesAnnotation] = field(
+    messages: Annotated[Sequence[AnyMessage], _MessagesAnnotation] = field(
         default_factory=list
     )
     """
