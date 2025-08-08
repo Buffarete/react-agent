@@ -30,7 +30,11 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
         try:
             from langchain_openai import ChatOpenAI  # type: ignore
 
-            return ChatOpenAI(model=model, use_responses_api=True)
+            return ChatOpenAI(
+                model=model,
+                use_responses_api=True,
+                output_version="responses/v1",
+            )
         except Exception:
             # Fallback to the generic initializer, attempting to enable Responses API
             try:
