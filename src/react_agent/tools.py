@@ -8,9 +8,12 @@ consider implementing more robust and specialized tools tailored to your needs.
 
 from typing import Any, Callable, List, Optional, cast
 
+from langchain_core.tools import tool
+
 from react_agent.configuration import Configuration
 
 
+@tool
 async def search(query: str) -> Optional[dict[str, Any]]:
     """Search for general web results.
 

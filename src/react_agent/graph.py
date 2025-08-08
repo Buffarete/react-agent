@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Dict, List, Literal, cast
 
 from langchain_core.messages import AIMessage
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from react_agent.configuration import Configuration
@@ -64,23 +64,8 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
         }
 
     # Return the model's response as a list to be added to existing messages
-    # Ensure helpful update fields for streaming clients
-    if response.tool_calls:
-        response.additional_kwargs = {
-            **(response.additional_kwargs or {}),
-            "tool_calls": response.tool_calls,
-            "reasoning": "Model decided to call tools to gather information.",
-        }
-    else:
-        response.additional_kwargs = {
-            **(response.additional_kwargs or {}),
-            "reasoning": "Model returned a direct answer.",
-        }
-
     return {"messages": [response]}
 
-
-# Define a new graph
 
 builder = StateGraph(State, input_schema=InputState, context_schema=Configuration)
 
@@ -88,9 +73,7 @@ builder = StateGraph(State, input_schema=InputState, context_schema=Configuratio
 builder.add_node(call_model)
 builder.add_node("tools", ToolNode(TOOLS))
 
-# Set the entrypoint as `call_model`
-# This means that this node is the first one called
-builder.add_edge("__start__", "call_model")
+builder.add_edge(START, "call_model")
 
 
 def route_model_output(state: State) -> Literal["__end__", "tools"]:
@@ -111,18 +94,13 @@ def route_model_output(state: State) -> Literal["__end__", "tools"]:
         )
     # If there is no tool call, then we finish
     if not last_message.tool_calls:
-        return "__end__"
+        return END
     # Otherwise we execute the requested actions
     return "tools"
 
 
 # Add a conditional edge to determine the next step after `call_model`
-builder.add_conditional_edges(
-    "call_model",
-    # After call_model finishes running, the next node(s) are scheduled
-    # based on the output from route_model_output
-    route_model_output,
-)
+builder.add_conditional_edges("call_model", route_model_output)
 
 # Add a normal edge from `tools` to `call_model`
 # This creates a cycle: after using tools, we always return to the model

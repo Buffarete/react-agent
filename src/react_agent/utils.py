@@ -3,6 +3,7 @@
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
+from langchain_openai import ChatOpenAI
 
 
 def get_message_text(msg: BaseMessage) -> str:
@@ -25,24 +26,10 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
     """
     provider, model = fully_specified_name.split("/", maxsplit=1)
     if provider == "openai":
-        # Prefer explicit ChatOpenAI with the Responses API to ensure OpenAI
-        # goes through the new Responses endpoint.
-        try:
-            from langchain_openai import ChatOpenAI  # type: ignore
-
-            return ChatOpenAI(
-                model=model,
-                use_responses_api=True,
-                output_version="responses/v1",
-            )
-        except Exception:
-            # Fallback to the generic initializer, attempting to enable Responses API
-            try:
-                return init_chat_model(
-                    model,
-                    model_provider=provider,
-                    use_responses_api=True,
-                )
-            except TypeError:
-                return init_chat_model(model, model_provider=provider)
+        # Use ChatOpenAI with the Responses API by default for OpenAI models.
+        return ChatOpenAI(
+            model=model,
+            use_responses_api=True,
+            output_version="responses/v1",
+        )
     return init_chat_model(model, model_provider=provider)
