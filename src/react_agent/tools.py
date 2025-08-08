@@ -8,8 +8,6 @@ consider implementing more robust and specialized tools tailored to your needs.
 
 from typing import Any, Callable, List, Optional, cast
 
-from langchain_tavily import TavilySearch  # type: ignore[import-not-found]
-
 from react_agent.configuration import Configuration
 
 
@@ -21,6 +19,13 @@ async def search(query: str) -> Optional[dict[str, Any]]:
     for answering questions about current events.
     """
     configuration = Configuration.from_context()
+    try:
+        from langchain_tavily import TavilySearch  # type: ignore[import-not-found]
+    except Exception as exc:  # pragma: no cover - optional dependency
+        return {
+            "error": "TavilySearch is not available on this server. Install langchain-tavily or configure a different tool.",
+            "exception": str(exc),
+        }
     wrapped = TavilySearch(max_results=configuration.max_search_results)
     return cast(dict[str, Any], await wrapped.ainvoke({"query": query}))
 
