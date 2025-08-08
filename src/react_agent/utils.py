@@ -25,14 +25,20 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
     """
     provider, model = fully_specified_name.split("/", maxsplit=1)
     if provider == "openai":
-        # Prefer OpenAI's Responses API when using ChatOpenAI. If the installed
-        # langchain-openai version doesn't support this kwarg, gracefully fall back.
+        # Prefer explicit ChatOpenAI with the Responses API to ensure OpenAI
+        # goes through the new Responses endpoint.
         try:
-            return init_chat_model(
-                model,
-                model_provider=provider,
-                use_responses_api=True,
-            )
-        except TypeError:
-            return init_chat_model(model, model_provider=provider)
+            from langchain_openai import ChatOpenAI  # type: ignore
+
+            return ChatOpenAI(model=model, use_responses_api=True)
+        except Exception:
+            # Fallback to the generic initializer, attempting to enable Responses API
+            try:
+                return init_chat_model(
+                    model,
+                    model_provider=provider,
+                    use_responses_api=True,
+                )
+            except TypeError:
+                return init_chat_model(model, model_provider=provider)
     return init_chat_model(model, model_provider=provider)
