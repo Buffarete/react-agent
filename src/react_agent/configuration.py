@@ -43,6 +43,10 @@ class Configuration:
         },
     )
 
+    # Accept common platform headers if coerced into context
+    accept: str | None = field(default=None)
+    user_agent: str | None = field(default=None)
+
     @classmethod
     def from_context(cls) -> Configuration:
         """Create a Configuration instance from a RunnableConfig object."""

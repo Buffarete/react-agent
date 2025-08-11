@@ -1,6 +1,7 @@
 """State definitions for the agent using modern LangGraph patterns."""
 
-from typing import Annotated, TypedDict
+from typing import Annotated
+from typing_extensions import TypedDict
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
