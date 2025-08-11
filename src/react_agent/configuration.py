@@ -35,6 +35,14 @@ class Configuration:
         },
     )
 
+    # Accept platform-injected context keys (ignored by our code but prevents coercion errors)
+    host: str | None = field(
+        default=None,
+        metadata={
+            "description": "Platform-injected host value; not used by the agent."
+        },
+    )
+
     @classmethod
     def from_context(cls) -> Configuration:
         """Create a Configuration instance from a RunnableConfig object."""

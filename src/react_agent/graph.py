@@ -64,7 +64,7 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     return {"messages": [response]}
 
 
-builder = StateGraph(State, context_schema=Configuration)
+builder = StateGraph(State, config_schema=Configuration)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
