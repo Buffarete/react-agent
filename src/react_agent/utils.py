@@ -30,6 +30,10 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
         return ChatOpenAI(
             model=model,
             use_responses_api=True,
+            use_previous_response_id=True,
             output_version="responses/v1",
+            model_kwargs={
+                "truncation": "auto",
+            },
         )
     return init_chat_model(model, model_provider=provider)

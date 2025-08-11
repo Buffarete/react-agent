@@ -1,7 +1,4 @@
-"""Define a custom Reasoning and Action agent.
-
-Works with a chat model with tool calling support.
-"""
+"""Reasoning-and-Action agent graph built on modern LangGraph patterns."""
 
 from datetime import UTC, datetime
 from typing import Dict, List, Literal, cast
@@ -11,7 +8,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from react_agent.configuration import Configuration
-from react_agent.state import InputState, State
+from react_agent.state import State
 from react_agent.tools import TOOLS
 from react_agent.utils import load_chat_model
 
@@ -44,12 +41,12 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     response = cast(
         AIMessage,
         await model.ainvoke(
-            [{"role": "system", "content": system_message}, *state.messages]
+            [{"role": "system", "content": system_message}, *state["messages"]]
         ),
     )
 
     # Handle the case when it's the last step and the model still wants to use a tool
-    if state.is_last_step and response.tool_calls:
+    if state["is_last_step"] and response.tool_calls:
         return {
             "messages": [
                 AIMessage(
@@ -67,7 +64,7 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     return {"messages": [response]}
 
 
-builder = StateGraph(State, input_schema=InputState, context_schema=Configuration)
+builder = StateGraph(State, context_schema=Configuration)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
@@ -87,7 +84,7 @@ def route_model_output(state: State) -> Literal["__end__", "tools"]:
     Returns:
         str: The name of the next node to call ("__end__" or "tools").
     """
-    last_message = state.messages[-1]
+    last_message = state["messages"][-1]
     if not isinstance(last_message, AIMessage):
         raise ValueError(
             f"Expected AIMessage in output edges, but got {type(last_message).__name__}"
