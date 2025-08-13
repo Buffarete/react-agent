@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
-from react_agent.configuration import Configuration
+from react_agent.configuration import Configuration, AnyContext
 from react_agent.state import State
 from react_agent.tools import TOOLS
 from react_agent.utils import load_chat_model
@@ -64,7 +64,7 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     return {"messages": [response]}
 
 
-builder = StateGraph(State, config_schema=Configuration)
+builder = StateGraph(State, config_schema=AnyContext)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
